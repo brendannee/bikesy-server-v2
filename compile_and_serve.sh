@@ -1,4 +1,5 @@
-docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-extract -p /opt/bicycle.lua /data/SanFrancisco.osm.pbf
-docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-partition /data/SanFrancisco.osrm
-docker run -t -v "${PWD}:/data" osrm/osrm-backend osrm-customize /data/SanFrancisco.osrm
-docker run -t -i -p 5000:5000 -v "${PWD}:/data" osrm/osrm-backend osrm-routed --algorithm mld /data/SanFrancisco.osrm
+./osrm-backend/build/osrm-extract -p ./profiles/bicycle.lua bay_area.osm.pbf
+./osrm-backend/build/osrm-partition bay_area.osrm
+./osrm-backend/build/osrm-customize bay_area.osrm
+./osrm-backend/build/osrm-routed --algorithm mld bay_area.osrm
+

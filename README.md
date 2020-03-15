@@ -54,7 +54,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 sudo cmake --build . --target install
 ```
-### Prepare Data
+### Prepare Data (see compile_and_serve.sh)
 ```
 ./osrm-backend/build/osrm-extract -p ./profiles/bicycle.lua bay_area.osm.pbf
 ./osrm-backend/build/osrm-partition bay_area.osrm
