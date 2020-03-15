@@ -1,6 +1,12 @@
 # data
 
 *.osm.*
+*.osrm.*
+*.osm
+*.osrm
+
+# Mac Development
+.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
