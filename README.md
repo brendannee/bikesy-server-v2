@@ -1,15 +1,15 @@
 # bikemapper-v2
 Update to graphserver-based bike mapper.  Uses custom lua profiles based on existing bicycle model provided by OSRM.
 
-## Installation and prequisites
+## Installation and Prequisites
 
 ### Homebrew/XCode
 Make sure you have XCode installed with command line tools (app store).
 Homebrew
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-```
 brew install osmosis boost git cmake libzip libstxxl libxml2 lua tbb ccache postgis
+```
 
 ### Data
 ```
@@ -38,7 +38,7 @@ create table bikelanes as select nextval('tmp') as id, way_id, cycleway, st_make
 ```
 
 ## OSRM
-### Install submodule
+### Install Submodule
 ```
 git submodule init
 git submodule update
@@ -54,19 +54,19 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 cmake --build .
 sudo cmake --build . --target install
 ```
-### Prepare data
+### Prepare Data
 ```
 ./osrm-backend/build/osrm-extract -p ./profiles/bicycle.lua bay_area.osm.pbf
 ./osrm-backend/build/osrm-partition bay_area.osrm
 ./osrm-backend/build/osrm-customize bay_area.osrm
 ```
 
-### Serve (port 5000)
+### Serve (Port 5000)
 ```
 ./osrm-backend/build/osrm-routed --algorithm mld bay_area.osrm
 ```
 
-### confirm that you get the wiggle with basic bicycle profile
+### Confirm the Wiggle
 ```
 curl -s "http://127.0.0.1:5000/route/v1/driving/-122.424474,37.766237;-122.430911,37.779670?steps=false" | jq -r .routes[0].geometry
 ```
@@ -75,7 +75,7 @@ Should return
 afoeFz~ejV]@lAdi@uS~@?h@iI`Ah@fI{Dd@h@hIiVtC~Bb^{Dd@|@bN
 ```
 
-### [Easier frontend](https://hub.docker.com/r/osrm/osrm-frontend/)
+### [Easier Frontend](https://hub.docker.com/r/osrm/osrm-frontend/)
 ```
 docker pull osrm/osrm-frontend
 docker run -p 9966:9966 osrm/osrm-frontend
