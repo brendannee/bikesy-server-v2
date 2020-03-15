@@ -1,6 +1,3 @@
 [submodule "osrm-backend"]
 	path = osrm-backend
 	url = git@github.com:Project-OSRM/osrm-backend.git
-[submodule "log.lua"]
-	path = log.lua
-	url = git@github.com:rxi/log.lua.git
