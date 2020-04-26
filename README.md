@@ -15,6 +15,7 @@ brew install osmosis boost git cmake libzip libstxxl libxml2 lua tbb ccache post
 #### OSM
 ```
 mkdir -p data
+mkdir -p data/elevation
 curl -o ./data/california-latest.osm.bz2 https://download.geofabrik.de/north-america/us/california-latest.osm.bz2
 gunzip ./data/california-latest.osm.bz2
 ```
@@ -36,11 +37,12 @@ osmosis --read-xml file=./data/bay_area.osm --write-pgsql host=localhost databas
 #### USGS Elevation
 Highest resolution is 1/3rd arc second.  Adjust lat/lng as needed (values represent top-right corner of 1-degree bounding box.
 You can play with tile size (100x100) - this will impact loading vs. access time because index is on each cell.
+Place all the files you need to cover the area in a directory ./data/elevation.  Note that the indexing is by top-right corner lat/lng.
 ```
 for lat in 38 39; do
     for lng in 122 123; do
         # download USGS 1/3rd arc second data
-        curl -o ./data/USGS_13_n${lat}w${lng}.tif https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/n${lat}w${lng}/USGS_13_n${lat}w${lng}.tif;
+        curl -o ./data/elevation/USGS_13_n${lat}w${lng}.tif https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/n${lat}w${lng}/USGS_13_n${lat}w${lng}.tif;
     done;
 done
 ```
@@ -52,6 +54,12 @@ python3 elevation_mapper.py
 ```
 
 This will write a file, elevation.csv, with a mapping from node_id to elevation in meters.  Any errors are recored in errors.csv.
+
+```
+psql -c "drop table if exists node_elevation; create table node_elevation (node_id bigint, elevation float);" -d bikemapper -U postgres
+echo "\copy node_elevation from elevation.csv with csv delimiter as ','" | psql -d bikemapper -U postgres
+psql -c "alter table node_elevation add primary key (node_id);" -d bikemapper -U postgres
+```
 
 ## OSRM
 ### Install Submodule
