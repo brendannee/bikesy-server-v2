@@ -12,31 +12,46 @@ brew install osmosis boost git cmake libzip libstxxl libxml2 lua tbb ccache post
 ```
 
 ### Data
+#### OSM
 ```
 mkdir -p data
 curl -o ./data/california-latest.osm.bz2 https://download.geofabrik.de/north-america/us/california-latest.osm.bz2
 gunzip ./data/california-latest.osm.bz2
 ```
 
-## Osmosis
-
-### Extract Bay Area (needed for OSRM)
+#### Extract Bay Area (needed for OSRM)
 ```
 osmosis --read-xml file=./data/california-latest.osm --bounding-box left=-123.404077 bottom=37.171696 top=38.619150 right=-121.674775 --write-pbf ./data/bay_area.osm.pbf
 ```
 Or alternately, work directly with [bzcat](https://wiki.openstreetmap.org/wiki/Osmosis#Extracting_bounding_boxes)
 
-### Optional: Load Postgres DB For Investigation
+#### Load Postgres DB For Investigation
 ```
 psql -c "create database bikemapper;" -d postgres -U postgres
 psql -c "create extension postgis; create extension hstore;" -d bikemapper -U postgres
 psql -f /usr/local/Cellar/osmosis/0.47/libexec/script/pgsnapshot_schema_0.6.sql -d bikemapper -U postgres
 osmosis --read-xml file=./data/bay_area.osm --write-pgsql host=localhost database=bikemapper user=postgres
 ```
-You can create postgis map of only bike lanes using the following SQL:
+
+#### USGS Elevation
+Highest resolution is 1/3rd arc second.  Adjust lat/lng as needed (values represent top-right corner of 1-degree bounding box.
+You can play with tile size (100x100) - this will impact loading vs. access time because index is on each cell.
 ```
-create table bikelanes as select nextval('tmp') as id, way_id, cycleway, st_makeline(geom) as geom from (select way_id, ways.tags -> 'cycleway' as cycleway, geom, sequence_id from ways join way_nodes on (ways.id = way_nodes.way_id) join nodes on (nodes.id = way_nodes.node_id) where ways.tags -> 'cycleway' is not null order by way_id, sequence_id) foo group by way_id, cycleway;
+for lat in 38 39; do
+    for lng in 122 123; do
+        # download USGS 1/3rd arc second data
+        curl -o ./data/USGS_13_n${lat}w${lng}.tif https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/n${lat}w${lng}/USGS_13_n${lat}w${lng}.tif;
+    done;
+done
 ```
+Assuming all data are in correct folders, run:
+
+```
+pip3 install -r requirements.txt
+python3 elevation_mapper.py
+```
+
+This will write a file, elevation.csv, with a mapping from node_id to elevation in meters.  Any errors are recored in errors.csv.
 
 ## OSRM
 ### Install Submodule
@@ -81,3 +96,22 @@ afoeFz~ejV]@lAdi@uS~@?h@iI`Ah@fI{Dd@h@hIiVtC~Bb^{Dd@|@bN
 docker pull osrm/osrm-frontend
 docker run -p 9966:9966 osrm/osrm-frontend
 ```
+
+## Other half-baked ideas / to-dos
+
+You can create postgis map of only bike lanes using the following SQL:
+```
+create temporary sequence tmp;
+create table bikelanes as select nextval('tmp') as id, way_id, cycleway, st_makeline(geom) as geom from (select way_id, ways.tags -> 'cycleway' as cycleway, ways.tags -> 'geom, sequence_id from ways join way_nodes on (ways.id = way_nodes.way_id) join nodes on (nodes.id = way_nodes.node_id) where ways.tags -> 'cycleway' is not null order by way_id, sequence_id) foo group by way_id, cycleway;
+```
+
+### [Elevation Plugin](https://github.com/locked-fg/osmosis-srtm-plugin)
+Installed as submodule.  Follow above link for any installation issues.
+```
+mkdir -p /usr/local/Cellar/osmosis/0.47/bin/plugins
+jar cf /usr/local/Cellar/osmosis/0.47/bin/plugins/srtm.jar ./osmosis-srtm-plugin/src/main/java/de/locked/osmosis/srtmplugin/*.java
+echo "de.locked.osmosis.srtmplugin.SrtmPlugin_loader" > /usr/local/Cellar/osmosis/0.47/libexec/config/osmosis-plugins.conf
+```
+
+
+

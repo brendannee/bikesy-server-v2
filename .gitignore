@@ -1,9 +1,16 @@
+# misc
+
+osmosis-srtm-plugin
+data
+
 # data
 
 *.osm.*
 *.osrm.*
 *.osm
 *.osrm
+elevation.csv
+errors.csv
 
 # Mac Development
 .DS_Store
