@@ -22,9 +22,8 @@ gunzip ./data/california-latest.osm.bz2
 
 #### Extract Bay Area (needed for OSRM)
 ```
-osmosis --read-xml file=./data/california-latest.osm --bounding-box left=-123.404077 bottom=37.171696 top=38.619150 right=-121.674775 --write-pbf ./data/bay_area.osm.pbf
+bzcat ./data/california-latest.osm.bz2 | osmosis --read-xml file=- --bounding-box left=-123.404077 bottom=37.171696 top=38.619150 right=-121.674775 --write-pbf ./data/bay_area.osm.pbf
 ```
-Or alternately, work directly with [bzcat](https://wiki.openstreetmap.org/wiki/Osmosis#Extracting_bounding_boxes)
 
 #### Load Postgres DB For Investigation
 ```
@@ -38,6 +37,9 @@ osmosis --read-xml file=./data/bay_area.osm --write-pgsql host=localhost databas
 Highest resolution is 1/3rd arc second.  Adjust lat/lng as needed (values represent top-right corner of 1-degree bounding box.
 You can play with tile size (100x100) - this will impact loading vs. access time because index is on each cell.
 Place all the files you need to cover the area in a directory ./data/elevation.  Note that the indexing is by top-right corner lat/lng.
+You can download from [nationalmap.gov](https://viewer.nationalmap.gov/basic/#productSearch) or directly if you know the lat/lon you are looking for.
+
+For N38W122 to N39W123:
 ```
 for lat in 38 39; do
     for lng in 122 123; do
@@ -53,7 +55,7 @@ pip3 install -r requirements.txt
 python3 elevation_mapper.py
 ```
 
-This will write a file, elevation.csv, with a mapping from node_id to elevation in meters.  Any errors are recored in errors.csv.
+This will write a file, elevation.csv, with a mapping from node_id to elevation in meters.  Any errors are recorded in errors.csv.
 
 ```
 psql -c "drop table if exists node_elevation; create table node_elevation (node_id bigint, elevation float);" -d bikemapper -U postgres
