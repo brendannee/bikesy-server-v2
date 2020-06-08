@@ -81,6 +81,7 @@ cmake --build .
 sudo cmake --build . --target install
 ```
 ### Prepare Data (see compile_and_serve.sh)
+For the first step, if developing locally pass a "-t 1" option to avoid loading the elevation file for multiple threads.
 ```
 ./osrm-backend/build/osrm-extract -p ./profiles/bicycle.lua ./data/bay_area.osm.pbf
 ./osrm-backend/build/osrm-partition ./data/bay_area.osrm
