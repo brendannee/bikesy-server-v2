@@ -2,6 +2,7 @@
 
 api_version = 4
 
+-- all copied from osrm submodule
 Set = require('lib/set')
 Sequence = require('lib/sequence')
 Handlers = require('lib/way_handlers')
@@ -10,8 +11,20 @@ limit = require('lib/maxspeed').limit
 Measure = require('lib/measure')
 log = require('lib/log')
 
+-- copied from lua-csv submodule
+csv = require('lib/csv')
+
+log.info("LOADING ELEVATION")
+local f = csv.open("./elevation.csv")
+elevation_table = {}
+for fields in f:lines() do
+  for i, v in ipairs(fields) do elevation_table[i] = v end
+end
+log.info("FINISHED LOADING ELEVATION")
+
 function setup()
   log.info("SETTING UP BICYCLE.LUA #####")
+  -- custom elevation data processed using elevation_mapper.py
   local default_speed = 15
   local cycleway_speed = 30
   local walking_speed = 4

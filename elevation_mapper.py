@@ -1,15 +1,23 @@
+import os
 import rasterio
 import esy.osm.pbf
 
+data_dir = './data/elevation/'
+
+def build_tif_file_name_nw(lat, lng):
+    # note only works for northern / western hemispheres
+    return 'USGS_13_n{}w{}.tif'.format(lat, lng)
+
 # load 
 print("Loading geotiffs into memory")
-geotiffs = (
-    rasterio.open('./data/USGS_13_n39w122.tif'),
-    rasterio.open('./data/USGS_13_n39w123.tif'),
-    rasterio.open('./data/USGS_13_n38w122.tif'),
-    rasterio.open('./data/USGS_13_n38w123.tif'),    
-)
-bands = [geotiff.read(1) for geotiff in geotiffs]
+geotiffs = {}
+for tif in os.listdir(data_dir):
+    print(f"processing {tif}")
+    data = rasterio.open(data_dir + tif)
+    geotiffs[tif] = {
+        'tif': data,
+        'band': data.read(1)
+    }
 
 print("Loading OSM into memory")
 osm = esy.osm.pbf.File('./data/bay_area.osm.pbf')
@@ -27,14 +35,13 @@ with open('errors.csv', 'w') as errors:
                 # this logic obviously can be improved but works for four tiles
                 if lonlat[1] >= 38:
                     # top right/top left
-                    tiff = geotiffs[0] if lonlat[0] >= -122 else geotiffs[1]
-                    band = bands[0] if lonlat[0] >= -122 else bands[1]
+                    tile = geotiffs[build_tif_file_name_nw(39, 122)] if lonlat[0] >= -122 else geotiffs[build_tif_file_name_nw(39, 123)]
                 else:
                     # bottom right/bottom left
-                    tiff = geotiffs[2] if lonlat[0] >= -122 else geotiffs[3]
-                    band = bands[2] if lonlat[0] >= -122 else bands[3]
+                    tile = geotiffs[build_tif_file_name_nw(38, 122)] if lonlat[0] >= -122 else geotiffs[build_tif_file_name_nw(38, 123)]
                 try:
-                    elevations.write("{}, {}\n".format(entry.id, band[tiff.index(lonlat[0], lonlat[1])]))
+                    elevations.write("{}, {}\n".format(entry.id, tile['band'][tile['tif'].index(lonlat[0], lonlat[1])]))
+
                 except Exception as e:
                     print(f"Found error for id {entry.id}")
                     errors.write("{}, {}\n".format(entry.id, e))
