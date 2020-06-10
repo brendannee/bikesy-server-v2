@@ -5,7 +5,7 @@ import esy.osm.pbf
 
 DATA_DIR = './data/elevation/'
 ERROR_FILE = 'errors.csv'
-OUTPUT_FILE = 'elevation_tmp.csv'
+OUTPUT_FILE = 'elevation.csv'
 OSM_PATH = './data/bay_area.osm.pbf'
 
 

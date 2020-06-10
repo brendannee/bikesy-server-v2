@@ -51,6 +51,7 @@ done
 Assuming all data are in correct folders, run:
 
 ```
+cd scripts
 pip3 install -r requirements.txt
 python3 elevation_mapper.py
 ```
@@ -64,33 +65,27 @@ psql -c "alter table node_elevation add primary key (node_id);" -d bikemapper -U
 ```
 
 ## OSRM
-### Install Submodule
+### Use modified version of docker file to host with custom profiles
+#### Copy data needed to build
 ```
-git submodule init
-git submodule update
+cp ./data/bay_area.osm.pbf ./docker/bay_area.osm.pbf
+cp ./scripts/elevation.csv ./docker/elevation.csv
 ```
-### Build
-See [OSRM documentation](https://github.com/Project-OSRM/osrm-backend/wiki/Building-OSRM).
-TO DO: contribute new bicycle lua files to repo and build using docker (recommended).
+#### Build docker image
 ```
-cd osrm-backend
-mkdir -p build
-cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-cmake --build .
-sudo cmake --build . --target install
+docker build -t bike-mapper docker
 ```
-### Prepare Data (see compile_and_serve.sh)
-For the first step, if developing locally pass a "-t 1" option to avoid loading the elevation file for multiple threads.
+This image can be posted to a repository to deploy on heroku, etc.  To create custom profiles, pass argument to docker build and specify alternative name.
 ```
-./osrm-backend/build/osrm-extract -p ./profiles/bicycle.lua ./data/bay_area.osm.pbf
-./osrm-backend/build/osrm-partition ./data/bay_area.osrm
-./osrm-backend/build/osrm-customize ./data/bay_area.osrm
+docker build -t bike-mapper-safe --build-arg profile=bicycle_extra_safe.lua docker
 ```
-
-### Serve (Port 5000)
+#### Host
 ```
-./osrm-backend/build/osrm-routed --algorithm mld ./data/bay_area.osrm
+docker run -t -i -p 5000:5000 bike-mapper osrm-routed --algorithm mld ./data/bay_area.osrm
+```
+Ideally you would run alternate images on different ports, e.g.
+```
+docker run -t -i -p 5001:5001 bike-mapper-safe osrm-routed --algorithm mld ./data/bay_area.osrm
 ```
 
 ### Confirm the Wiggle
@@ -122,7 +117,10 @@ Installed as submodule.  Follow above link for any installation issues.
 mkdir -p /usr/local/Cellar/osmosis/0.47/bin/plugins
 jar cf /usr/local/Cellar/osmosis/0.47/bin/plugins/srtm.jar ./osmosis-srtm-plugin/src/main/java/de/locked/osmosis/srtmplugin/*.java
 echo "de.locked.osmosis.srtmplugin.SrtmPlugin_loader" > /usr/local/Cellar/osmosis/0.47/libexec/config/osmosis-plugins.conf
+
 ```
 
+docker pull osrm/osrm-backend
+docker build -t bike-mapper-prepare docker/prepare
 
 
