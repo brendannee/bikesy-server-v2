@@ -9,7 +9,8 @@ data
 *.osrm.*
 *.osm
 *.osrm
-elevation.csv
+elevation*.csv
+elevation*.txt
 errors.csv
 
 # Mac Development
