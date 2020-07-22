@@ -1,6 +1,0 @@
-[submodule "osrm-backend"]
-	path = osrm-backend
-	url = git@github.com:Project-OSRM/osrm-backend.git
-[submodule "lua-csv"]
-	path = lua-csv
-	url = git@github.com:geoffleyland/lua-csv.git

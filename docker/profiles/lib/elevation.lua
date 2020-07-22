@@ -4,7 +4,7 @@ log = require('lib/log')
 csv = require('lib/csv')
 
 log.info("LOADING ELEVATION")
-local f = csv.open("./elevation.csv")
+local f = csv.open("./data/elevation.csv")
 ElevationTable = {}
 for fields in f:lines() do
     data = {}
