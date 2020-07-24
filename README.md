@@ -9,6 +9,7 @@ Homebrew
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 brew install osmosis boost git cmake libzip libstxxl libxml2 lua tbb ccache postgis
+brew cask install docker
 ```
 
 ### Data
@@ -22,14 +23,14 @@ gunzip ./data/california-latest.osm.bz2
 
 #### Extract Bay Area (needed for OSRM)
 ```
-bzcat ./data/california-latest.osm.bz2 | osmosis --read-xml file=- --bounding-box left=-123.404077 bottom=37.171696 top=38.619150 right=-121.674775 --write-pbf ./data/bay_area.osm.pbf
+osmosis --read-xml file=./data/california-latest.osm --bounding-box left=-123.404077 bottom=37.171696 top=38.619150 right=-121.674775 --write-pbf ./data/bay_area.osm.pbf
 ```
 
 #### Load Postgres DB For Investigation
 ```
 psql -c "create database bikemapper;" -d postgres -U postgres
 psql -c "create extension postgis; create extension hstore;" -d bikemapper -U postgres
-psql -f /usr/local/Cellar/osmosis/0.47/libexec/script/pgsnapshot_schema_0.6.sql -d bikemapper -U postgres
+psql -f /usr/local/Cellar/osmosis/0.48.2/libexec/script/pgsnapshot_schema_0.6.sql -d bikemapper -U postgres
 osmosis --read-xml file=./data/bay_area.osm --write-pgsql host=localhost database=bikemapper user=postgres
 ```
 
@@ -44,7 +45,7 @@ For N38W122 to N39W123:
 for lat in 38 39; do
     for lng in 122 123; do
         # download USGS 1/3rd arc second data
-        curl -o ./data/elevation/USGS_13_n${lat}w${lng}.tif https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/n${lat}w${lng}/USGS_13_n${lat}w${lng}.tif;
+        curl "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/n${lat}w${lng}/USGS_13_n${lat}w${lng}.tif" > "./data/elevation/USGS_13_n${lat}w${lng}.tif"
     done;
 done
 ```
@@ -60,7 +61,8 @@ This will write a file, elevation.csv, with a mapping from node_id to elevation 
 
 ```
 psql -c "drop table if exists node_elevation; create table node_elevation (node_id bigint, elevation float);" -d bikemapper -U postgres
-echo "\copy node_elevation from elevation.csv with csv delimiter as ','" | psql -d bikemapper -U postgres
+elevationpath=$(find `pwd` -name elevation.csv)
+echo "\COPY node_elevation from '${elevationpath}' with csv delimiter as ','" | psql -d bikemapper -U postgres
 psql -c "alter table node_elevation add primary key (node_id);" -d bikemapper -U postgres
 ```
 

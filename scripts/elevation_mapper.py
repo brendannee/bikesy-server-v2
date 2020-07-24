@@ -3,10 +3,10 @@ import rasterio
 import sys
 import esy.osm.pbf
 
-DATA_DIR = './data/elevation/'
+DATA_DIR = '../data/elevation/'
 ERROR_FILE = 'errors.csv'
 OUTPUT_FILE = 'elevation.csv'
-OSM_PATH = './data/bay_area.osm.pbf'
+OSM_PATH = '../data/bay_area.osm.pbf'
 
 
 def build_tif_file_name_nw(lat, lng):
@@ -48,9 +48,7 @@ with open(ERROR_FILE, 'w') as errors:
                     # save space with huge file: use only centimeter precision
                     # extract lat/lng also in this phase because lua doesn't make it easy
                     elev = '{:.2f}'.format(float(tile['band'][tile['tif'].index(lonlat[0], lonlat[1])]))
-                    lat = '{:.6f}'.format(lonlat[1])
-                    lng = '{:.6f}'.format(lonlat[0])
-                    elevations.write(f'{entry.id},{elev},{lng},{lat}\n')
+                    elevations.write(f'{entry.id},{elev}\n')
 
                 except Exception as e:
                     print(f"Found error for id {entry.id}")
