@@ -21,7 +21,11 @@ COPY ./data/elevation_sample.csv data/elevation.csv
 COPY ./data/bay_area.osm.pbf data/bay_area.osm.pbf
 
 # extract and comppile using bicycle profile
-RUN osrm-extract -p $profile data/bay_area.osm.pbf
+# note: the -t option is to single thread the extraction process which is slightly slower
+# when developing locally you typically don't have enough memory to load the elevation file for each thread (default 3)
+# may want to consider changing when ready for production depending on the constraints of AWS machines
+
+RUN osrm-extract -t 1 -p $profile data/bay_area.osm.pbf
 RUN osrm-partition data/bay_area.osrm
 RUN osrm-customize data/bay_area.osrm
 
