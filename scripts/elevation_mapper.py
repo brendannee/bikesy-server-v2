@@ -48,7 +48,9 @@ with open(ERROR_FILE, 'w') as errors:
                     # save space with huge file: use only centimeter precision
                     # extract lat/lng also in this phase because lua doesn't make it easy
                     elev = '{:.2f}'.format(float(tile['band'][tile['tif'].index(lonlat[0], lonlat[1])]))
-                    elevations.write(f'{entry.id},{elev}\n')
+                    lat = '{:.6f}'.format(lonlat[1])
+                    lng = '{:.6f}'.format(lonlat[0])
+                    elevations.write(f'{entry.id},{elev},{lng},{lat}\n')
 
                 except Exception as e:
                     print(f"Found error for id {entry.id}")

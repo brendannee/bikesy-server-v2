@@ -60,7 +60,7 @@ python3 elevation_mapper.py
 This will write a file, elevation.csv, with a mapping from node_id to elevation in meters.  Any errors are recorded in errors.csv.
 
 ```
-psql -c "drop table if exists node_elevation; create table node_elevation (node_id bigint, elevation float);" -d bikemapper -U postgres
+psql -c "drop table if exists node_elevation; create table node_elevation (node_id bigint, elevation float, lng float, lat float);" -d bikemapper -U postgres
 elevationpath=$(find `pwd` -name elevation.csv)
 echo "\COPY node_elevation from '${elevationpath}' with csv delimiter as ','" | psql -d bikemapper -U postgres
 psql -c "alter table node_elevation add primary key (node_id);" -d bikemapper -U postgres
