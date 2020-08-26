@@ -87,7 +87,7 @@ docker run -t -i -p 5001:5001 bike-mapper-safe osrm-routed --algorithm mld ./dat
 
 ### Confirm the Wiggle
 ```
-curl -s "http://127.0.0.1:5000/route/v1/driving/-122.424474,37.766237;-122.430911,37.779670?steps=false" | jq -r .routes[0].geometry
+curl -s "http://127.0.0.1:5000/route/v1/driving/-122.424474,37.766237;-122.430911,37.779670?steps=false" | jq -r ".routes[0].geometry"
 ```
 Should return
 ```
