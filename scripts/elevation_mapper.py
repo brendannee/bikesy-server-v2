@@ -3,10 +3,12 @@ import rasterio
 import sys
 import esy.osm.pbf
 
-DATA_DIR = './data/elevation/'
+input_file = sys.argv[1] if len(sys.argv) > 1 else 'bay_area'
+
+DATA_DIR = './data/elevation'
 ERROR_FILE = 'errors.csv'
-OUTPUT_FILE = 'elevation.csv'
-OSM_PATH = './data/bay_area.osm.pbf'
+OUTPUT_FILE = f'{DATA_DIR}/elevation.csv'
+OSM_PATH = f'./data/{input_file}.osm.pbf'
 
 
 def build_tif_file_name_nw(lat, lng):
@@ -18,7 +20,7 @@ print("Loading geotiffs into memory")
 geotiffs = {}
 for tif in os.listdir(DATA_DIR):
     print(f"processing {tif}")
-    data = rasterio.open(DATA_DIR + tif)
+    data = rasterio.open(f"{DATA_DIR}/{tif}")
     geotiffs[tif] = {
         'tif': data,
         'band': data.read(1)
