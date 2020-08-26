@@ -9,6 +9,7 @@ Homebrew
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 brew install osmosis boost git cmake libzip libstxxl libxml2 lua tbb ccache postgis
+brew cask install docker
 ```
 
 ### Data
@@ -22,7 +23,7 @@ gunzip ./data/california-latest.osm.bz2
 
 #### Extract Bay Area (needed for OSRM)
 ```
-bzcat ./data/california-latest.osm.bz2 | osmosis --read-xml file=- --bounding-box left=-123.404077 bottom=37.171696 top=38.619150 right=-121.674775 --write-pbf ./data/bay_area.osm.pbf
+osmosis --read-xml file=./data/california-latest.osm --bounding-box left=-123.404077 bottom=37.171696 top=38.619150 right=-121.674775 --write-pbf ./data/bay_area.osm.pbf
 ```
 For testing sample that includes just the wiggle and golden gate bridge, use bounds (37.8343042,-122.487191), (37.764910, -122.414635).
 ```
@@ -40,7 +41,7 @@ For N38W122 to N39W123:
 for lat in 38 39; do
     for lng in 122 123; do
         # download USGS 1/3rd arc second data
-        curl -o ./data/elevation/USGS_13_n${lat}w${lng}.tif https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/n${lat}w${lng}/USGS_13_n${lat}w${lng}.tif;
+        curl "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/n${lat}w${lng}/USGS_13_n${lat}w${lng}.tif" > "./data/elevation/USGS_13_n${lat}w${lng}.tif"
     done;
 done
 ```
@@ -58,7 +59,7 @@ If you are using a file other than "bay_area.osm.pbf" pass that name to the elev
 python3 ./scripts/elevation_mapper.py bay_area_sample
 ```
 
-This will write a file, elevation.csv, with a mapping from node_id to elevation in meters.  Any errors are recorded in errors.csv.
+This will write a file, ./data/elevation/elevation.csv, with a mapping from node_id to elevation in meters.  Any errors are recorded in errors.csv.
 
 ## OSRM
 ### Use modified version of docker file to host with custom profiles
