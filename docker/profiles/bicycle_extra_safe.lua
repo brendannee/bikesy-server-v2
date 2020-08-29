@@ -1,7 +1,5 @@
 -- Bicycle profile
-
--- For now this is identicaly to bicycle.lua
--- I'm including now only to show how to use multiple Dockerfiles to deploy services
+-- FOR NOW, IDENTICAL TO bicycle.lua
 
 api_version = 4
 
@@ -13,17 +11,9 @@ find_access_tag = require('lib/access').find_access_tag
 limit = require('lib/maxspeed').limit
 Measure = require('lib/measure')
 log = require('lib/log')
-
--- copied from lua-csv submodule
-csv = require('lib/csv')
-
-log.info("LOADING ELEVATION")
-local f = csv.open("./elevation.csv")
-elevation_table = {}
-for fields in f:lines() do
-  for i, v in ipairs(fields) do elevation_table[i] = v end
-end
-log.info("FINISHED LOADING ELEVATION")
+elevation = require('lib/elevation')
+haversine = require('lib/haversine')
+math = require('math')
 
 function setup()
   log.info("SETTING UP BICYCLE.LUA #####")
@@ -43,6 +33,11 @@ function setup()
       use_turn_restrictions         = false,
       continue_straight_at_waypoint = false,
       mode_change_penalty           = 30,
+      max_slope                     = 15,
+      -- for every percent grade, decrease speed by this amount
+      uphill_speed_ratio            = .05,
+      -- for every percent grade, increase speed by this amount
+      downhill_speed_ratio          = .05,
     },
 
     default_mode              = mode.cycling,
@@ -260,6 +255,25 @@ function process_node(profile, node, result)
   end
 end
 
+function handle_elevation(profile,way,result,data)
+  -- add elevation to data
+  local nodes = way:get_nodes()
+  local start_node = nodes[1]
+  local end_node = nodes[#nodes]
+  if start_node ~= nil and end_node ~= nil then
+    local start_data = elevation[tostring(start_node:id())]
+    local end_data = elevation[tostring(end_node:id())]
+    if (start_data ~= nil and end_data ~= nil) then
+      local delta_elevation = end_data['elevation'] - start_data['elevation']
+      -- use only start/end nodes so not super precise
+      local distance = haversine(start_data['lat'], start_data['lng'], end_data['lat'], end_data['lng'])
+      if distance > 0 then
+        data['slope'] = 100 * delta_elevation / distance
+      end
+    end
+  end
+end
+
 function handle_bicycle_tags(profile,way,result,data)
     -- initial routability check, filters out buildings, boundaries, etc
   data.route = way:get_value_by_key("route")
@@ -277,6 +291,11 @@ function handle_bicycle_tags(profile,way,result,data)
   (not data.public_transport or data.public_transport=='') and
   (not data.bridge or data.bridge=='')
   then
+    return false
+  end
+
+  -- don't route on routes that are too steep
+  if data['slope'] ~=nil and math.abs(data['slope']) >= profile.properties.max_slope then
     return false
   end
 
@@ -539,18 +558,16 @@ function safety_handler(profile,way,result,data)
     local is_undesireable = data.highway == "service" and profile.service_penalties[data.service]
     local forward_penalty = 1.
     local backward_penalty = 1.
-    if data.has_cycleway_forward then
-      forward_penalty = 20000.
-    end
-    if data.has_cycleway_backward then
-      backward_penalty = 20000.
-    end
+
     if forward_is_unsafe then
       forward_penalty = math.min(forward_penalty, safety_penalty)
     end
     if backward_is_unsafe then
        backward_penalty = math.min(backward_penalty, safety_penalty)
     end
+
+    local forward_slope = data['slope']
+    local backward_slope = data['slope'] * -1
 
     if is_undesireable then
        forward_penalty = math.min(forward_penalty, profile.service_penalties[data.service])
@@ -560,24 +577,31 @@ function safety_handler(profile,way,result,data)
     if result.forward_speed > 0 then
       -- convert from km/h to m/s
       result.forward_rate = result.forward_speed / 3.6 * forward_penalty
+      -- handle elevation
+      if forward_slope > 0 then
+        result.forward_rate = result.forward_rate * (1 - forward_slope * profile.properties.uphill_speed_ratio)
+      end
+      if forward_slope < 0 then
+        result.forward_rate = result.forward_rate * (1 + forward_slope * profile.properties.downhill_speed_ratio)
+      end
     end
     if result.backward_speed > 0 then
       -- convert from km/h to m/s
       result.backward_rate = result.backward_speed / 3.6 * backward_penalty
+      -- handle elevation
+      if backward_slope > 0 then
+        result.backward_rate = result.backward_rate * (1 - backward_slope * profile.properties.uphill_speed_ratio)
+      end
+      if forward_slope < 0 then
+        result.backward_rate = result.backward_rate * (1 + backward_slope * profile.properties.downhill_speed_ratio)
+      end
     end
     if result.duration > 0 then
-      if data.has_cycleway_forward then
-        log.info("CYCLEWAY")
-        log.info(forward_penalty)
-        log.info(backward_penalty)
-        log.info("-----")
-      end
       result.weight = result.duration / forward_penalty
     end
 
     if data.highway == "bicycle" then
-      -- safety_bonus = safety_bonus + 0.2
-      safety_bonus = 20000.
+      safety_bonus = safety_bonus + 0.2
       if result.forward_speed > 0 then
         -- convert from km/h to m/s
         result.forward_rate = result.forward_speed / 3.6 * safety_bonus
@@ -656,6 +680,9 @@ function process_way(profile, way, result)
     -- routable. this includes things like status=impassable,
     -- toll=yes and oneway=reversible
     WayHandlers.blocked_ways,
+
+    -- elevation
+    handle_elevation,
 
     -- our main handler
     handle_bicycle_tags,
