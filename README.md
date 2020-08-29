@@ -72,6 +72,7 @@ or
 cp ./data/bay_area_sample.osm.pbf ./docker/extract.osm.pbf
 ```
 
+```
 cp ./data/elevation/elevation.csv ./docker/elevation.csv
 ```
 #### Build docker image
