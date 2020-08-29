@@ -64,9 +64,14 @@ This will write a file, ./data/elevation/elevation.csv, with a mapping from node
 ## OSRM
 ### Use modified version of docker file to host with custom profiles
 #### Copy data needed to build
+
+Choose processed input data and copy to docker file.
 ```
-cp ./data/bay_area.osm.pbf ./docker/bay_area.osm.pbf
-cp ./data/bay_area_sample.osm.pbf ./docker/bay_area_sample.osm.pbf
+cp ./data/bay_area.osm.pbf ./docker/extract.osm.pbf
+or
+cp ./data/bay_area_sample.osm.pbf ./docker/extract.osm.pbf
+```
+
 cp ./data/elevation/elevation.csv ./docker/elevation.csv
 ```
 #### Build docker image
@@ -79,21 +84,22 @@ docker build -t bike-mapper-safe --build-arg profile=bicycle_extra_safe.lua dock
 ```
 #### Host
 ```
-docker run -t -i -p 5000:5000 bike-mapper osrm-routed --algorithm mld ./data/bay_area.osrm
+docker run -t -i -p 5000:5000 bike-mapper osrm-routed --algorithm mld ./data/extract.osrm
 ```
 Ideally you would run alternate images on different ports, e.g.
 ```
-docker run -t -i -p 5001:5001 bike-mapper-safe osrm-routed --algorithm mld ./data/bay_area.osrm
+docker run -t -i -p 5001:5001 bike-mapper-safe osrm-routed --algorithm mld ./data/extract.osrm
 ```
 
 ### Confirm the Wiggle
 ```
-curl -s "http://127.0.0.1:5000/route/v1/driving/-122.424474,37.766237;-122.430911,37.779670?steps=false" | jq -r ".routes[0].geometry"
+curl -s "http://127.0.0.1:5000/route/v1/driving/-122.424474,37.766237;-122.443049,37.775325?steps=false" | jq -r ".routes[0].geometry"
 ```
 Should return
 ```
-afoeFz~ejV]@lAdi@uS~@?h@iI`Ah@fI{Dd@h@hIiVtC~Bb^{Dd@|@bN
+}foeF``fjVjA`h@uS~@?h@iI`Ah@fI{Dd@h@hIiVtC~Bb^{Dd@j@vI
 ```
+![The Wiggle](https://github.com/jedidiahhorne/bikemapper-v2/blob/master/wiggle.png)
 
 ### [Easier Frontend](https://hub.docker.com/r/osrm/osrm-frontend/)
 ```
