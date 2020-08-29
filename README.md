@@ -97,7 +97,7 @@ curl -s "http://127.0.0.1:5000/route/v1/driving/-122.424474,37.766237;-122.44304
 ```
 Should return
 ```
-}foeF``fjVjA`h@uS~@?h@iI`Ah@fI{Dd@h@hIiVtC~Bb^{Dd@j@vI
+}foeF\`\`fjVjA\`h@uS~@?h@iI\`Ah@fI{Dd@h@hIiVtC~Bb^{Dd@j@vI
 ```
 ![The Wiggle](https://github.com/jedidiahhorne/bikemapper-v2/blob/master/wiggle.png)
 
