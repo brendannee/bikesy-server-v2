@@ -1,7 +1,7 @@
 # bikemapper-v2
 Update to graphserver-based bike mapper.  Uses custom lua profiles based on existing bicycle model provided by OSRM.
 
-## Installation and Prequisites
+## Installation and Prerequisites
 
 ### Homebrew/XCode
 Make sure you have XCode installed with command line tools (app store).
@@ -9,6 +9,7 @@ Homebrew
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
 brew install osmosis boost git cmake libzip libstxxl libxml2 lua tbb ccache postgis
+brew cask install docker
 ```
 
 ### Data
@@ -22,15 +23,11 @@ gunzip ./data/california-latest.osm.bz2
 
 #### Extract Bay Area (needed for OSRM)
 ```
-bzcat ./data/california-latest.osm.bz2 | osmosis --read-xml file=- --bounding-box left=-123.404077 bottom=37.171696 top=38.619150 right=-121.674775 --write-pbf ./data/bay_area.osm.pbf
+osmosis --read-xml file=./data/california-latest.osm --bounding-box left=-123.404077 bottom=37.171696 top=38.619150 right=-121.674775 --write-pbf ./data/bay_area.osm.pbf
 ```
-
-#### Load Postgres DB For Investigation
+For testing sample that includes just the wiggle and golden gate bridge, use bounds (37.8343042,-122.487191), (37.764910, -122.414635).
 ```
-psql -c "create database bikemapper;" -d postgres -U postgres
-psql -c "create extension postgis; create extension hstore;" -d bikemapper -U postgres
-psql -f /usr/local/Cellar/osmosis/0.47/libexec/script/pgsnapshot_schema_0.6.sql -d bikemapper -U postgres
-osmosis --read-xml file=./data/bay_area.osm --write-pgsql host=localhost database=bikemapper user=postgres
+osmosis --read-xml file="./data/bay_area.osm" --bounding-box left=-122.487191 bottom=37.764910 top=37.8343042 right=-122.414635 --write-pbf ./data/bay_area_sample.osm.pbf
 ```
 
 #### USGS Elevation
@@ -44,32 +41,33 @@ For N38W122 to N39W123:
 for lat in 38 39; do
     for lng in 122 123; do
         # download USGS 1/3rd arc second data
-        curl -o ./data/elevation/USGS_13_n${lat}w${lng}.tif https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/n${lat}w${lng}/USGS_13_n${lat}w${lng}.tif;
+        curl "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/n${lat}w${lng}/USGS_13_n${lat}w${lng}.tif" > "./data/elevation/USGS_13_n${lat}w${lng}.tif"
     done;
 done
 ```
 Assuming all data are in correct folders, run:
 
 ```
-cd scripts
+virtualenv env
+source env/bin/activate
 pip3 install -r requirements.txt
-python3 elevation_mapper.py
+python3 ./scripts/elevation_mapper.py
 ```
 
-This will write a file, elevation.csv, with a mapping from node_id to elevation in meters.  Any errors are recorded in errors.csv.
+If you are using a file other than "bay_area.osm.pbf" pass that name to the elevation_mapper script, e.g.
+```
+python3 ./scripts/elevation_mapper.py bay_area_sample
+```
 
-```
-psql -c "drop table if exists node_elevation; create table node_elevation (node_id bigint, elevation float);" -d bikemapper -U postgres
-echo "\copy node_elevation from elevation.csv with csv delimiter as ','" | psql -d bikemapper -U postgres
-psql -c "alter table node_elevation add primary key (node_id);" -d bikemapper -U postgres
-```
+This will write a file, ./data/elevation/elevation.csv, with a mapping from node_id to elevation in meters.  Any errors are recorded in errors.csv.
 
 ## OSRM
 ### Use modified version of docker file to host with custom profiles
 #### Copy data needed to build
 ```
 cp ./data/bay_area.osm.pbf ./docker/bay_area.osm.pbf
-cp ./scripts/elevation.csv ./docker/elevation.csv
+cp ./data/bay_area_sample.osm.pbf ./docker/bay_area_sample.osm.pbf
+cp ./data/elevation/elevation.csv ./docker/elevation.csv
 ```
 #### Build docker image
 ```
@@ -90,7 +88,7 @@ docker run -t -i -p 5001:5001 bike-mapper-safe osrm-routed --algorithm mld ./dat
 
 ### Confirm the Wiggle
 ```
-curl -s "http://127.0.0.1:5000/route/v1/driving/-122.424474,37.766237;-122.430911,37.779670?steps=false" | jq -r .routes[0].geometry
+curl -s "http://127.0.0.1:5000/route/v1/driving/-122.424474,37.766237;-122.430911,37.779670?steps=false" | jq -r ".routes[0].geometry"
 ```
 Should return
 ```
@@ -120,7 +118,17 @@ echo "de.locked.osmosis.srtmplugin.SrtmPlugin_loader" > /usr/local/Cellar/osmosi
 
 ```
 
-docker pull osrm/osrm-backend
-docker build -t bike-mapper-prepare docker/prepare
+### Analysis in Postgis
+```
+psql -c "create database bikemapper;" -d postgres -U postgres
+psql -c "create extension postgis; create extension hstore;" -d bikemapper -U postgres
+psql -f /usr/local/Cellar/osmosis/0.47/libexec/script/pgsnapshot_schema_0.6.sql -d bikemapper -U postgres
+osmosis --read-xml file=./data/bay_area.osm --write-pgsql host=localhost database=bikemapper user=postgres
+```
 
-
+Elevation data
+```
+psql -c "drop table if exists node_elevation; create table node_elevation (node_id bigint, elevation float);" -d bikemapper -U postgres
+echo "\copy node_elevation from elevation.csv with csv delimiter as ','" | psql -d bikemapper -U postgres
+psql -c "alter table node_elevation add primary key (node_id);" -d bikemapper -U postgres
+```
