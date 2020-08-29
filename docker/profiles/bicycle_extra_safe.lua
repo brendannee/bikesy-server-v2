@@ -18,7 +18,7 @@ log = require('lib/log')
 csv = require('lib/csv')
 
 log.info("LOADING ELEVATION")
-local f = csv.open("./elevation_sample.csv")
+local f = csv.open("./elevation.csv")
 elevation_table = {}
 for fields in f:lines() do
   for i, v in ipairs(fields) do elevation_table[i] = v end

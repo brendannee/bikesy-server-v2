@@ -10,7 +10,6 @@ ERROR_FILE = 'errors.csv'
 OUTPUT_FILE = f'{DATA_DIR}/elevation.csv'
 OSM_PATH = f'./data/{input_file}.osm.pbf'
 
-
 def build_tif_file_name_nw(lat, lng):
     # note only works for northern / western hemispheres
     return f'USGS_13_n{lat}w{lng}.tif'

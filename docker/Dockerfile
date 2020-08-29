@@ -17,8 +17,8 @@ COPY ./profiles/lib/elevation.lua lib/elevation.lua
 # copy bay area OSM and elevation data
 # these need to be built separately when updating build
 # if useful, can instead host on S3 or something
-COPY ./data/elevation_sample.csv data/elevation.csv
-COPY ./data/bay_area.osm.pbf data/bay_area.osm.pbf
+COPY ./elevation.csv data/elevation.csv
+COPY ./bay_area.osm.pbf data/bay_area.osm.pbf
 
 # extract and comppile using bicycle profile
 # note: the -t option is to single thread the extraction process which is slightly slower
