@@ -106,6 +106,16 @@ docker pull osrm/osrm-frontend
 docker run -p 9966:9966 osrm/osrm-frontend
 ```
 
+## Heroku
+
+```
+heroku git:remote -a bikesy-api
+cd docker
+heroku container:login
+heroku container:push web
+heroku container:release web
+```
+
 ## Other half-baked ideas / to-dos
 
 You can create postgis map of only bike lanes using the following SQL:
