@@ -72,3 +72,4 @@ with open(ERROR_FILE, 'w') as errors:
                 except Exception as e:
                     print(f"Found error for id {entry.id}")
                     errors.write(f'{entry.id},{e}\n')
+pipe.execute()
