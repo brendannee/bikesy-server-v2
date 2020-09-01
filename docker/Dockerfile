@@ -31,8 +31,9 @@ RUN osrm-partition data/extract.osrm
 RUN osrm-customize data/extract.osrm
 
 # show help for route API
-RUN osrm-routed --help
+# RUN osrm-routed --help
+CMD osrm-routed -t 1 -p $PORT --algorithm mld ./data/extract.osrm
 
 # compile and run (on port 5000)
 # docker build -t bike-mapper docker
-# docker run -t -i -p 5000:5000 bike-mapper osrm-routed --algorithm mld ./data/extract.osrm
+# docker run -t 1 -i -p 5000:5000 bike-mapper osrm-routed --algorithm mld ./data/extract.osrm
