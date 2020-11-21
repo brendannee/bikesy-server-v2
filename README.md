@@ -15,7 +15,6 @@ brew cask install docker
 ### Data
 #### OSM
 ```
-mkdir -p data
 mkdir -p data/elevation
 curl -o ./data/california-latest.osm.bz2 https://download.geofabrik.de/north-america/us/california-latest.osm.bz2
 gunzip ./data/california-latest.osm.bz2
@@ -36,11 +35,10 @@ You can play with tile size (100x100) - this will impact loading vs. access time
 Place all the files you need to cover the area in a directory ./data/elevation.  Note that the indexing is by top-right corner lat/lng.
 You can download from [nationalmap.gov](https://viewer.nationalmap.gov/basic/#productSearch) or directly if you know the lat/lon you are looking for.
 
-For N38W122 to N39W123:
+For N38W122 to N39W123 (USGS 1/3rd arc second data):
 ```
 for lat in 38 39; do
     for lng in 122 123; do
-        # download USGS 1/3rd arc second data
         curl "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/n${lat}w${lng}/USGS_13_n${lat}w${lng}.tif" > "./data/elevation/USGS_13_n${lat}w${lng}.tif"
     done;
 done
@@ -48,9 +46,10 @@ done
 Assuming all data are in correct folders, run:
 
 ```
-virtualenv env
+virtualenv --python=python3.8 env
 source env/bin/activate
-pip3 install -r requirements.txt
+pip3 install -r ./scripts/requirements.txt
+export REDIS_URL=<VALUE FROM HEROKU>
 python3 ./scripts/elevation_mapper.py
 ```
 
@@ -107,6 +106,7 @@ docker run -p 9966:9966 osrm/osrm-frontend
 ```
 
 ## Heroku
+Note that you may need to up the standard 2 GB memory allocation in Docker (for Bay Area 16GB works okay).  This is done using whatever platform you are developing on locally.
 
 ```
 heroku git:remote -a bikesy-api

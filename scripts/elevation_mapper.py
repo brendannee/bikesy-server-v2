@@ -15,7 +15,7 @@ OSM_PATH = f'./data/{input_file}.osm.pbf'
 # ideally this would be done in app itself, but for now easy workaround to prepopulate data
 # for wrapper app, use os.environ.get("REDIS_URL")
 # also: these will be rotated, so you'll have to get from heroku web periodically
-REDIS_URI = 'redis://h:p8e4b4b25361021b8f96a94292d7be59b079c702bdc2ffd9d56582c7df5fbbd03@ec2-54-167-200-131.compute-1.amazonaws.com:13269'
+REDIS_URI = os.getenv("REDIS_URL")
 
 r = redis.from_url(REDIS_URI)
 pipe = r.pipeline()
