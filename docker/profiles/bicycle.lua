@@ -21,12 +21,12 @@ function setup()
   local cycleway_speed = 30
   local walking_speed = 4
 
+  -- values to adjust for cycle safety: max_slope, speed ratios, bike_route_safety_bonus
   return {
     properties = {
       u_turn_penalty                = 20,
       traffic_light_penalty         = 2,
-      --weight_name                   = 'cyclability',
-      weight_name                   = 'duration',
+      weight_name                   = 'cyclability', -- for cars use 'duration'
       process_call_tagless_node     = false,
       max_speed_for_map_matching    = 110/3.6, -- kmph -> m/s
       use_turn_restrictions         = false,
@@ -37,6 +37,8 @@ function setup()
       uphill_speed_ratio            = .05,
       -- for every percent grade, increase speed by this amount
       downhill_speed_ratio          = .05,
+      -- extra safety for bicycles
+      bike_route_safety_bonus            = .2
     },
 
     default_mode              = mode.cycling,
@@ -564,10 +566,12 @@ function safety_handler(profile,way,result,data)
     if backward_is_unsafe then
        backward_penalty = math.min(backward_penalty, safety_penalty)
     end
-
-    local forward_slope = data['slope']
-    local backward_slope = data['slope'] * -1
-
+    local forward_slope = 0
+    local backward_slope = 0
+    if data['slope'] ~=nil then
+      forward_slope = data['slope']
+      backward_slope = data['slope'] * -1
+    end
     if is_undesireable then
        forward_penalty = math.min(forward_penalty, profile.service_penalties[data.service])
        backward_penalty = math.min(backward_penalty, profile.service_penalties[data.service])
@@ -600,7 +604,7 @@ function safety_handler(profile,way,result,data)
     end
 
     if data.highway == "bicycle" then
-      safety_bonus = safety_bonus + 0.2
+      safety_bonus = safety_bonus + profiles.properties.bike_route_safety_bonus
       if result.forward_speed > 0 then
         -- convert from km/h to m/s
         result.forward_rate = result.forward_speed / 3.6 * safety_bonus

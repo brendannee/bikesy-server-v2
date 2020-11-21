@@ -25,9 +25,9 @@ gunzip ./data/california-latest.osm.bz2
 osmosis --read-xml file=./data/california-latest.osm --bounding-box left=-123.404077 bottom=37.171696 top=38.619150 right=-121.674775 --write-pbf ./data/bay_area.osm.pbf
 ```
 For testing sample that includes just the wiggle and golden gate bridge, use bounds (37.8343042,-122.487191), (37.764910, -122.414635).
-```
-osmosis --read-xml file="./data/bay_area.osm" --bounding-box left=-122.487191 bottom=37.764910 top=37.8343042 right=-122.414635 --write-pbf ./data/bay_area_sample.osm.pbf
-```
+
+For all of San Francisco:
+(37.70230166835287, -122.5241176570151), (37.84002900260014, -122.34455987162356)
 
 #### USGS Elevation
 Highest resolution is 1/3rd arc second.  Adjust lat/lng as needed (values represent top-right corner of 1-degree bounding box.
