@@ -3,22 +3,25 @@ import redis
 import rasterio
 import sys
 import esy.osm.pbf
+import argparse
 
-input_file = sys.argv[1] if len(sys.argv) > 1 else 'bay_area'
+parser = argparse.ArgumentParser()
+parser.add_argument('--skip_redis', action='store_true')
+parser.add_argument('--skip_file', action='store_true')
+parser.add_argument('--input_file', default='bay_area')
+args = parser.parse_args()
+
+# heroku-redis
+# credentials will be rotated, so you'll have to get from heroku web periodically
+if not args.skip_redis:
+    REDIS_URI = os.getenv("REDIS_URL")
+    r = redis.from_url(REDIS_URI)
+    pipe = r.pipeline()
 
 DATA_DIR = './data/elevation'
 ERROR_FILE = 'errors.csv'
-OUTPUT_FILE = f'{DATA_DIR}/elevation.csv'
-OSM_PATH = f'./data/{input_file}.osm.pbf'
-
-# heroku-redis
-# ideally this would be done in app itself, but for now easy workaround to prepopulate data
-# for wrapper app, use os.environ.get("REDIS_URL")
-# also: these will be rotated, so you'll have to get from heroku web periodically
-REDIS_URI = os.getenv("REDIS_URL")
-
-r = redis.from_url(REDIS_URI)
-pipe = r.pipeline()
+OUTPUT_FILE = f'{DATA_DIR}/elevation.csv' if not args.skip_file else '/dev/null'
+OSM_PATH = f'./data/{args.input_file}.osm.pbf'
 
 def publish_to_redis(key, value):
     pipe.set(key, value)
@@ -42,14 +45,14 @@ for tif in os.listdir(DATA_DIR):
 print("Loading OSM into memory")
 osm = esy.osm.pbf.File(OSM_PATH)
 nodes_processed = 0
-print("OK")
 with open(ERROR_FILE, 'w') as errors:
     with open(OUTPUT_FILE, 'w') as elevations:
         nodes_processed = nodes_processed + 1
         for entry in osm:
             if nodes_processed % 10000 == 0:
-                print(f"processed {nodes_processed} nodes", nodes_processed)
-                pipe.execute()
+                print(f"processed {nodes_processed} nodes")
+                if not args.skip_redis:
+                    pipe.execute()
             nodes_processed = nodes_processed + 1
             # almost all nodes are part of way_node mapping, no need to further filter
             if entry.__class__ == esy.osm.pbf.file.Node:
@@ -67,9 +70,12 @@ with open(ERROR_FILE, 'w') as errors:
                     elev = '{:.2f}'.format(float(tile['band'][tile['tif'].index(lonlat[0], lonlat[1])]))
                     lat = '{:.6f}'.format(lonlat[1])
                     lng = '{:.6f}'.format(lonlat[0])
-                    elevations.write(f'{entry.id},{elev},{lng},{lat}\n')
-                    publish_to_redis(entry.id, elev)
+                    if not args.skip_file:
+                        elevations.write(f'{entry.id},{elev},{lng},{lat}\n')
+                    if not args.skip_redis:
+                        publish_to_redis(entry.id, elev)
                 except Exception as e:
                     print(f"Found error for id {entry.id}")
                     errors.write(f'{entry.id},{e}\n')
-pipe.execute()
+if not args.skip_redis:
+    pipe.execute()

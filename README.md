@@ -50,15 +50,10 @@ virtualenv --python=python3.8 env
 source env/bin/activate
 pip3 install -r ./scripts/requirements.txt
 export REDIS_URL=<VALUE FROM HEROKU>
-python3 ./scripts/elevation_mapper.py
+python3 ./scripts/elevation_mapper.py --skip_redis <optional, does not write to redis> --skip_file <optional, does not write to elevations.csv> --input_file <optional, defaults to 'bay_area'>
 ```
 
-If you are using a file other than "bay_area.osm.pbf" pass that name to the elevation_mapper script, e.g.
-```
-python3 ./scripts/elevation_mapper.py bay_area_sample
-```
-
-This will write a file, ./data/elevation/elevation.csv, with a mapping from node_id to elevation in meters.  Any errors are recorded in errors.csv.
+Assuming you didn't disable it, this will write a file, ./data/elevation/elevation.csv, with a mapping from node_id to elevation in meters, and publish to redis (production).  Any errors are recorded in errors.csv.
 
 ## OSRM
 ### Use modified version of docker file to host with custom profiles
