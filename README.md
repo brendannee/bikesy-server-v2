@@ -15,7 +15,6 @@ brew cask install docker
 ### Data
 #### OSM
 ```
-mkdir -p data
 mkdir -p data/elevation
 curl -o ./data/california-latest.osm.bz2 https://download.geofabrik.de/north-america/us/california-latest.osm.bz2
 gunzip ./data/california-latest.osm.bz2
@@ -26,9 +25,9 @@ gunzip ./data/california-latest.osm.bz2
 osmosis --read-xml file=./data/california-latest.osm --bounding-box left=-123.404077 bottom=37.171696 top=38.619150 right=-121.674775 --write-pbf ./data/bay_area.osm.pbf
 ```
 For testing sample that includes just the wiggle and golden gate bridge, use bounds (37.8343042,-122.487191), (37.764910, -122.414635).
-```
-osmosis --read-xml file="./data/bay_area.osm" --bounding-box left=-122.487191 bottom=37.764910 top=37.8343042 right=-122.414635 --write-pbf ./data/bay_area_sample.osm.pbf
-```
+
+For all of San Francisco:
+(37.70230166835287, -122.5241176570151), (37.84002900260014, -122.34455987162356)
 
 #### USGS Elevation
 Highest resolution is 1/3rd arc second.  Adjust lat/lng as needed (values represent top-right corner of 1-degree bounding box.
@@ -36,11 +35,10 @@ You can play with tile size (100x100) - this will impact loading vs. access time
 Place all the files you need to cover the area in a directory ./data/elevation.  Note that the indexing is by top-right corner lat/lng.
 You can download from [nationalmap.gov](https://viewer.nationalmap.gov/basic/#productSearch) or directly if you know the lat/lon you are looking for.
 
-For N38W122 to N39W123:
+For N38W122 to N39W123 (USGS 1/3rd arc second data):
 ```
 for lat in 38 39; do
     for lng in 122 123; do
-        # download USGS 1/3rd arc second data
         curl "https://prd-tnm.s3.amazonaws.com/StagedProducts/Elevation/13/TIFF/n${lat}w${lng}/USGS_13_n${lat}w${lng}.tif" > "./data/elevation/USGS_13_n${lat}w${lng}.tif"
     done;
 done
@@ -48,18 +46,14 @@ done
 Assuming all data are in correct folders, run:
 
 ```
-virtualenv env
+virtualenv --python=python3.8 env
 source env/bin/activate
-pip3 install -r requirements.txt
-python3 ./scripts/elevation_mapper.py
+pip3 install -r ./scripts/requirements.txt
+export REDIS_URL=<VALUE FROM HEROKU>
+python3 ./scripts/elevation_mapper.py --skip_redis <optional, does not write to redis> --skip_file <optional, does not write to elevations.csv> --input_file <optional, defaults to 'bay_area'>
 ```
 
-If you are using a file other than "bay_area.osm.pbf" pass that name to the elevation_mapper script, e.g.
-```
-python3 ./scripts/elevation_mapper.py bay_area_sample
-```
-
-This will write a file, ./data/elevation/elevation.csv, with a mapping from node_id to elevation in meters.  Any errors are recorded in errors.csv.
+Assuming you didn't disable it, this will write a file, ./data/elevation/elevation.csv, with a mapping from node_id to elevation in meters, and publish to redis (production).  Any errors are recorded in errors.csv.
 
 ## OSRM
 ### Use modified version of docker file to host with custom profiles
@@ -107,6 +101,7 @@ docker run -p 9966:9966 osrm/osrm-frontend
 ```
 
 ## Heroku
+Note that you may need to up the standard 2 GB memory allocation in Docker (for Bay Area 16GB works okay).  This is done using whatever platform you are developing on locally.
 
 ```
 heroku git:remote -a bikesy-api

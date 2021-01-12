@@ -18,8 +18,8 @@ COPY ./profiles/lib/haversine.lua lib/haversine.lua
 # copy OSM and elevation data
 # these need to be built separately when updating build
 # if useful, can instead host on S3 or something
-COPY ./data/elevation.csv data/elevation.csv
-COPY ./data/extract.osm.pbf data/extract.osm.pbf
+COPY elevation.csv data/elevation.csv
+COPY extract.osm.pbf data/extract.osm.pbf
 
 # extract and comppile using bicycle profile
 # note: the -t option is to single thread the extraction process which is slightly slower
