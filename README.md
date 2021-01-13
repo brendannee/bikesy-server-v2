@@ -111,6 +111,34 @@ heroku container:push web
 heroku container:release web
 ```
 
+## Digital Ocean
+If needed, ![create your registry in digital ocean](https://www.digitalocean.com/docs/container-registry/quickstart/registry).
+
+Install doctl and init repo (if needed).
+```
+brew install doctl
+doctl auth init --context bikesy
+doctl auth switch --context bikesy
+```
+
+Add new registry (one time)
+```
+doctl registry create bikesy
+doctl registry login
+```
+
+Each profile is a single app in DO and require their own lua profile.  Add as many as needed, push to docker repository, and deploy app.
+
+```
+docker build -t bike-mapper docker
+docker tag bike-mapper registry.digitalocean.com/bikesy/bike-mapper
+docker push registry.digitalocean.com/bikesy/bike-mapper
+
+docker build -t bike-mapper-extra-safe --build-arg profile=bicycle_extra_safe.lua docker
+docker tag bike-mapper-extra-safe registry.digitalocean.com/bikesy/bike-mapper-extra-safe
+docker push registry.digitalocean.com/bikesy/bike-mapper-extra-safe
+```
+
 ## Other half-baked ideas / to-dos
 
 You can create postgis map of only bike lanes using the following SQL:

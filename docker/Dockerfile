@@ -30,10 +30,14 @@ RUN osrm-extract -t 1 -p $profile data/extract.osm.pbf
 RUN osrm-partition data/extract.osrm
 RUN osrm-customize data/extract.osrm
 
+# cleanup large files so that image can be pushed more easily to repository
+RUN rm data/elevation.csv
+RUN rm data/extract.osm.pbf
+
 # show help for route API
 # RUN osrm-routed --help
 CMD osrm-routed -t 1 -p $PORT --algorithm mld ./data/extract.osrm
 
 # compile and run (on port 5000)
 # docker build -t bike-mapper docker
-# docker run -t 1 -i -p 5000:5000 bike-mapper osrm-routed --algorithm mld ./data/extract.osrm
+# docker run -i -p 5000:5000 bike-mapper osrm-routed --algorithm mld ./data/extract.osrm
