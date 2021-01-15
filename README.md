@@ -127,16 +127,15 @@ doctl registry create bikesy
 doctl registry login
 ```
 
-Each profile is a single app in DO and require their own lua profile.  Add as many as needed, push to docker repository, and deploy app.
+Each profile is a single app in DO and require their own lua profile.  Add as many as needed, push to docker repository, and deploy app. The convention is as followed:
+
+h (hills): low -> low tolerance, will avoid slopes.  high -> high tolerance, will take standard route.
+s (safety): low -> low safety, will consider most roads.  high -> high safety, will prefer bike lanes and non-primary roads.
 
 ```
-docker build -t bike-mapper docker
-docker tag bike-mapper registry.digitalocean.com/bikesy/bike-mapper
-docker push registry.digitalocean.com/bikesy/bike-mapper
-
-docker build -t bike-mapper-extra-safe --build-arg profile=bicycle_extra_safe.lua docker
-docker tag bike-mapper-extra-safe registry.digitalocean.com/bikesy/bike-mapper-extra-safe
-docker push registry.digitalocean.com/bikesy/bike-mapper-extra-safe
+docker build -t bike-mapper-h-med-s-med --build-arg profile=bicycle-h-med-s-med.lua docker
+docker tag bike-mapper-h-med-s-med registry.digitalocean.com/bikesy/bike-mapper-h-med-s-med
+docker push registry.digitalocean.com/bikesy/bike-mapper-h-med-s-med
 ```
 
 ## Other half-baked ideas / to-dos

@@ -2,7 +2,7 @@ FROM osrm/osrm-backend:latest
 
 # defaults to standard bike direction/port 5000
 # to run multiple servers pass as runtime args to docker build
-ARG profile=bicycle.lua
+ARG profile=bicycle-h-med-l-med.lua
 
 RUN mkdir /data
 
