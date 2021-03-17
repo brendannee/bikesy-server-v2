@@ -111,6 +111,33 @@ heroku container:push web
 heroku container:release web
 ```
 
+## Digital Ocean
+If needed, ![create your registry in digital ocean](https://www.digitalocean.com/docs/container-registry/quickstart/registry).
+
+Install doctl and init repo (if needed).
+```
+brew install doctl
+doctl auth init --context bikesy
+doctl auth switch --context bikesy
+```
+
+Add new registry (one time)
+```
+doctl registry create bikesy
+doctl registry login
+```
+
+Each profile is a single app in DO and require their own lua profile.  Add as many as needed, push to docker repository, and deploy app. The convention is as followed:
+
+h (hills): low -> low tolerance, will avoid slopes.  high -> high tolerance, will take standard route.
+s (safety): low -> low safety, will consider most roads.  high -> high safety, will prefer bike lanes and non-primary roads.
+
+```
+docker build -t bike-mapper-h-med-s-med --build-arg profile=bicycle-h-med-s-med.lua docker
+docker tag bike-mapper-h-med-s-med registry.digitalocean.com/bikesy/bike-mapper-h-med-s-med
+docker push registry.digitalocean.com/bikesy/bike-mapper-h-med-s-med
+```
+
 ## Other half-baked ideas / to-dos
 
 You can create postgis map of only bike lanes using the following SQL:
